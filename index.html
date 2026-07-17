@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Morse Keyer</title>
+<style>
+     * {
+        box-sizing: border-box;
+        border-radius: 0;
+     }
+
+     body { 
+        margin: 0;
+        padding: 20px;
+        font-family: monospace;
+        background: #fff;
+        color: #000;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+
+    h1 { 
+        margin: 0 0 20px 0;
+        font-size: 1rem;   
+        font-weight: normal;   
+    }
+
+    .row {
+        display: flex;
+        flex: 1;
+        gap: 20px;
+    }
+
+    #pad.down {
+        background: #000;
+        color: #fff;
+    }
+
+    #morse, #decoded {
+        flex: 1;
+        border: 2px solid #000;
+        background: #fff;
+        color: #000;
+        padding: 15px;
+        font-family: inherit;
+        color: #000;
+        font-size: 1.2rem;
+        resize: none;
+        outline: none;
+    }
+
+    #decoder {
+        overflow-y: auto;
+        word-break: break-word;
+    }
+
+    #bindBar {
+        width: 100%;
+        background: #000;
+        color:#fff;
+        border: 2xp solid #000;
+        padding: 10px;
+        margin-bottom: 20px;
+        font-family: inherit;
+        cursor: pointer;
+        text-align: left;
+        text-transform: uppercase;
+        outline: none;
+    }
+
+    #blindbar.listining {
+        background: #fff;
+        color: #000;
+    }
+
+    </style>
+    </head>
+    <body>
+
+
+         <button id="bindBar" type+ "button"> click to set keybind (current: space)</button>
+        <h1> morse code chat (by - kevin)</h1>
+
+        <div class+"row">
+            <button id="pad" type="button">KEY</button>
+            <textarea id="morese" spellcheck = "false"></textarea>
+            <div id="decoded"></div>
+        </div>
+
+    <script>
+        (function (){
+            "use strict";
+    
+    var MORSE = {
+    
+        A: ".-", B: "-...", C: "-.-.", D: "-..", E: ".", F: "..-.", G: "--.",
+        H: "....", I: "..", J: ".---", K: "-.-", L: ".-..", M: "--", N: "-.",
+        O: "---", P: ".--.", Q: "--.-", R: ".-.", S: "...", T: "-", U: "..-",
+         V: "...-", W: ".--", X: "-..-", Y: "-.--", Z: "--..",
+        "0": "-----", "1": ".----", "2": "..---", "3": "...--", "4": "....-",
+        "5": ".....", "6": "-....", "7": "--...", "8": "---..", "9": "----.",
+        ".": ".-.-.-", ",": "--..--", "?": "..--..", "'": ".----.", "!": "-.-.--",
+        "(": "-.--.", ")": "-.--.-", "&": ".-...", ":": "---...", ";": "-.-.-.",
+        "=": "-...-", "+": ".-.-.", "-": "-....-", "_": "..--.-", "\"": ".-..-.",
+        "$": "...-..-", "@": ".--.-."    
+    };
+    
+    var REV = {}
+    Object.keys(MORSE).forEach(function (k){REV[MORSE[k]] = k; });
+
+    var bindBar = document.getElementByld("bindBar");
+    var pad = document.getElementById("pad");
+    var morse = document.getElementById("morse");
+    var decoded = document.getElementById("decoded");
+
+    var boundCode = "Space"
+    var listining = false;
+    var isDown = false
+    var pressedAt = 0;
+    var letterTimer = null;
+    var wordTimer = null;
+    var UNIT = 150;
+
+    var AC = null, osc = null, gainNode = null;
+    function startTone() {
+        try{
+            if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+            if (AC.state ==="suspended") AC.resume();
+            osc = AC.createOscillator();
+            gainNode = AC.createGain();
+            osc.type = "sine";
+            osc.frequency.value = 600;
+            gainNode.gain.setValueAtTime(0, AC.currentTime);
+            gainNode.gain.liniar.RampToValueAtTime(0.35, AC.currentTime +0.012);
+            osc.connect(gainNode);
+            gainNode.connect(AC.destination);
+            osc.start();
+           }catch(e) {}
+        
+        }
+
+            function stopTone() {
+                try {
+                    if (osc) {
+                        var t = AC.currentTime;
+                        gainNode.gain.cancelScheduleValues(t);
+                        gainNode.gain.setValueAtTime(gainNode.gain.value, t);
+                        gainNode.gain.linearRampToValueAtTime(0, t +0.015);
+                        osc = null;
+                        gainNode = null;
+                    }
+                  }catch(e) {}
+                }
+    
+    function insertAtCaret(text) {
+        var start = typeof morse.selectionStart === "number" ? morseselectionStart : morse.value.length;
+        var end = typeof morseselectionEnd === "number" ? morse.selectionEnd : morse.value.length;
+        morse.value = morse.value.slice(0, start) + text + morse.value.slice(end);
+        var pos = start + text.length;
+        morse.selectionStart = morseselectionEnd = pos;
+        updateDecoded();
+    }
+    
+    function charBeforeCaret() { 
+        var pos = typeof morse.selectionStart === "number" ? morse.selectionStart : morse.value.length;
+        return pos > 0 ? morse.value.charAt(pos - 1): "";
+    }
+    
+    function updateDecoded() {
+        var v = morse.value.trim();
+        if (!v) {decoded.textContext = ""; return; }
+        var words = v.split(/\s*\/+\s*/);
+        var out = words.map(function (w) {
+            if (/^[.\-]+$/.test(sym)) return REV[sym] || "(?)";
+        return w.split(/\s+/).filter(Boolean).map(function(sym) {
+            if (/^[.\-]+$/.test(sym)) return REV[sym] || "(?)"
+            return "?";
+        }).join("");
+    }).join(" ");
+        decoded.textContext = out;
+    }
+        morse.addEventListener("imput", updateDecoded);
+
+        function stamp(e) {
+            return (e && typeof e.timeStamp === "number" && e.timeStamp > 0)
+              ? e.timeStamp : performance.now();
+  }
+
+    function press(e) {
+        if (isDown) return;
+        isDown = true;
+        clearTimeout(letterTimer);
+        clearTimeout(wordTimer);
+        pressedAt = stamp(e);
+        pad.classList.add("down");
+        startTone();
+    }
+
+function release(e) {
+    if (!isDown) return; 
+    isDown = false;
+    var dur = stamp(e) - pressedAt;
+    pad.classList.remove("down");
+    stopTone();
+
+    insertAtCaret(dur < UNIT * 1.6 ? ":" : "-");
+    
+    letterTimer = setTimeout(function () {
+      if (charBeforeCaret() && charBeforeCaret() !== " ") insertAtCaret(" ");
+    }, UNIT * 3);
+    wordTimer = setTimeout(function () {
+      if (charBeforeCaret() === " ") insertAtCaret("/ ");
+    }, UNIT * 7);
+  }
+}
+
+function cancelPress() {
+    if (!isDown) return;
+    isDown = false;
+    pad.classList.remove("down");
+    stopTone();
+}
+ document.addEventListener("keydown", function (e) {
+    if (listining) {
+        e.preventDefault();
+        e.stopPropagation();
+        listining = false
+        
+        boundCode = e.code; 
+        car keyLabel = (e.key == " ") ? "Space" : e.key;
+        blindBar.textContext = "click to set to keybind (current:) "+keyLabel+")";
+        blindBar.classList.remove("listining");
+        return
+    }
+
+    if (e.code === boundCode) {
+        e.preventDefault();
+        if (!e.repeat) press(e)
+    }
+ }, true);
+
+ document.addEventListener("keyup", function (e) {
+    e,preventDefault();
+    try { pad.setPointerCapture(e.setPointerCapture(e.pointerId); } catch (err) {}
+    press(e);
+ });
+
+ blindBar.addEventListener("click", function (e) {
+    listining = true;
+    blindBar.blur("listining");
+    blindBar.textContent = "press any key to bind...";
+    blindBar.blur();
+ });
+
+ pad.addEventListener("pointerup", function (e) { e.preventDefault(); release(e); });
+ pad.addEventListener("pointercancel", cancelPress);
+  pad.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
+  window.addEventListener("blur", cancelPress);
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) cancelPress();
+  });
+
+
+
+})();
+</script>
+</body>
+</html>

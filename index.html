@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Morse Keyer</title>
-<!-- This line links the app manifest -->
 <link rel="manifest" href="manifest.json">
 <style>
   * {
@@ -82,31 +81,39 @@
     color: #000;
   }
   
-  /* Reference Table Styles */
-  #refToggle {
-    margin-top: 20px;
+  /* --- NEW PHOTO REFERENCE STYLES --- */
+  #photoToggle {
+    width: 100%;
+    background: #000;
+    color: #fff;
     border: 2px solid #000;
     padding: 10px;
-    background: #fff;
-    color: #000;
-  }
-  #refToggle summary {
+    margin-top: 20px;
+    font-family: inherit;
+    font-size: 1rem;
     cursor: pointer;
+    text-align: center;
     text-transform: uppercase;
     outline: none;
-    list-style: none;
   }
-  #refToggle summary::-webkit-details-marker {
+  #photoToggle:hover {
+    background: #222;
+  }
+  #photoContainer {
     display: none;
+    height: 50vh; /* Takes up half the screen height when open */
+    border: 2px solid #000;
+    border-top: none; /* Merges the border seamlessly with the button above it */
+    background: #fff;
+    padding: 15px;
   }
-  #chart {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-    gap: 10px;
-    margin-top: 15px;
-    font-size: 1rem;
-    border-top: 2px solid #000;
-    padding-top: 15px;
+  #photoContainer.open {
+    display: block; /* Shows the container when the 'open' class is added */
+  }
+  #photoContainer img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Forces the image to stay within the box without stretching */
   }
 </style>
 </head>
@@ -122,17 +129,17 @@
     <div id="decoded"></div>
   </div>
 
-  <!-- Reference Table HTML -->
-  <details id="refToggle">
-    <summary>[+] view morse reference chart</summary>
-    <div id="chart"></div>
-  </details>
+  <!-- NEW EXPANDABLE PHOTO BAR -->
+  <button id="photoToggle" type="button">[+] view morse photo</button>
+  <div id="photoContainer">
+    <!-- CHANGE 'reference.png' TO THE EXACT NAME OF YOUR PHOTO FILE -->
+    <img src="reference.png" alt="Make sure your photo is saved in the same folder!">
+  </div>
 
 <script>
 (function () {
   "use strict";
 
-  // Register Service Worker for App Install
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
   }
@@ -156,17 +163,20 @@
   var pad = document.getElementById("pad");
   var morse = document.getElementById("morse");
   var decoded = document.getElementById("decoded");
-  var chart = document.getElementById("chart");
 
-  // Automatically Build the Reference Chart
-  Object.keys(MORSE).forEach(function (k) {
-    var s = document.createElement("span");
-    var b = document.createElement("b");
-    b.textContent = k + " ";
-    s.appendChild(b);
-    s.appendChild(document.createTextNode(MORSE[k]));
-    chart.appendChild(s);
+  // --- NEW PHOTO TOGGLE LOGIC ---
+  var photoToggle = document.getElementById("photoToggle");
+  var photoContainer = document.getElementById("photoContainer");
+  
+  photoToggle.addEventListener("click", function() {
+    photoContainer.classList.toggle("open");
+    if (photoContainer.classList.contains("open")) {
+      photoToggle.textContent = "[-] close morse photo";
+    } else {
+      photoToggle.textContent = "[+] view morse photo";
+    }
   });
+  // ------------------------------
 
   var boundCode = "Space";
   var listening = false; 

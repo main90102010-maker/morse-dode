@@ -81,6 +81,33 @@
     background: #fff;
     color: #000;
   }
+  
+  /* Reference Table Styles */
+  #refToggle {
+    margin-top: 20px;
+    border: 2px solid #000;
+    padding: 10px;
+    background: #fff;
+    color: #000;
+  }
+  #refToggle summary {
+    cursor: pointer;
+    text-transform: uppercase;
+    outline: none;
+    list-style: none;
+  }
+  #refToggle summary::-webkit-details-marker {
+    display: none;
+  }
+  #chart {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+    font-size: 1rem;
+    border-top: 2px solid #000;
+    padding-top: 15px;
+  }
 </style>
 </head>
 <body>
@@ -94,6 +121,12 @@
     <textarea id="morse" spellcheck="false"></textarea>
     <div id="decoded"></div>
   </div>
+
+  <!-- Reference Table HTML -->
+  <details id="refToggle">
+    <summary>[+] view morse reference chart</summary>
+    <div id="chart"></div>
+  </details>
 
 <script>
 (function () {
@@ -123,6 +156,17 @@
   var pad = document.getElementById("pad");
   var morse = document.getElementById("morse");
   var decoded = document.getElementById("decoded");
+  var chart = document.getElementById("chart");
+
+  // Automatically Build the Reference Chart
+  Object.keys(MORSE).forEach(function (k) {
+    var s = document.createElement("span");
+    var b = document.createElement("b");
+    b.textContent = k + " ";
+    s.appendChild(b);
+    s.appendChild(document.createTextNode(MORSE[k]));
+    chart.appendChild(s);
+  });
 
   var boundCode = "Space";
   var listening = false; 
